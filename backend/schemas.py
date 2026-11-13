@@ -58,3 +58,19 @@ class DeliveryRead(ORMModel):
     unit_price: Decimal | None
     notes: str | None
     created_at: datetime
+
+
+class AssistantMessage(BaseModel):
+    message: str = Field(min_length=1, max_length=4000)
+
+
+class AssistantReply(BaseModel):
+    reply: str
+    intent: str = "chat"
+
+
+class VoiceReply(BaseModel):
+    transcript: str
+    reply: str
+    audio_base64: str | None = None
+    audio_media_type: str | None = None
