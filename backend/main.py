@@ -1,13 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from backend.api.routes import router
 from backend.config import settings
 
 app = FastAPI(
     title=settings.app_name,
-    description="Server-side API for the Telegram and web voice assistant.",
-    version="0.2.0",
+    description="Серверна частина голосового помічника для вебсайту та Telegram.",
+    version="0.3.0",
 )
 
 app.add_middleware(
@@ -21,11 +22,10 @@ app.add_middleware(
 app.include_router(router)
 
 
-@app.get("/", tags=["system"])
-async def root() -> dict[str, str]:
-    return {"service": "cloud-voice-assistant", "status": "running", "docs": "/docs"}
-
-
-@app.get("/health", tags=["system"])
+@app.get("/health", tags=["система"])
 async def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+# Вебінтерфейс віддається тим самим сервером, що й REST API.
+app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
