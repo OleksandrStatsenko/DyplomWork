@@ -78,7 +78,8 @@ def test_supplier_product_and_delivery_lifecycle(client: TestClient) -> None:
 
     exported = client.get("/api/deliveries/export.csv")
     assert exported.status_code == 200
-    assert "Пісок" not in exported.text  # CSV exports normalized product ID, not joined display names.
+    assert "Пісок" in exported.text
+    assert "ТОВ Постачальник" in exported.text
 
     deleted = client.delete(f"/api/deliveries/{delivery_id}")
     assert deleted.status_code == 204
