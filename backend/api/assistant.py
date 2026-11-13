@@ -29,7 +29,8 @@ async def chat(payload: AssistantMessage):
 
 @router.post("/voice", response_model=VoiceReply)
 async def voice(file: UploadFile = File(...)):
-    if file.content_type not in ALLOWED_AUDIO_TYPES:
+    media_type = (file.content_type or "").split(";", 1)[0].strip().lower()
+    if media_type not in ALLOWED_AUDIO_TYPES:
         raise HTTPException(status_code=415, detail="Непідтримуваний формат аудіо.")
     audio = await file.read(MAX_AUDIO_SIZE + 1)
     if not audio:
