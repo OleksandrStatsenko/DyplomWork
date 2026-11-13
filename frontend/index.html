@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Голосовий помічник — облік постачань</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div><p class="eyebrow">ХМАРНИЙ ГОЛОСОВИЙ ПОМІЧНИК</p><h1>Облік постачань</h1></div>
+    <span id="connection" class="status">Перевірка сервера…</span>
+  </header>
+  <main>
+    <section class="intro">
+      <div><h2>Панель керування</h2><p>Додавайте постачальників, товари та реєструйте поставки в єдиній базі даних.</p></div>
+      <a class="button secondary" href="/docs" target="_blank" rel="noreferrer">Документація API</a>
+    </section>
+    <nav class="tabs" aria-label="Розділи">
+      <button class="tab active" data-tab="deliveries">Поставки</button>
+      <button class="tab" data-tab="suppliers">Постачальники</button>
+      <button class="tab" data-tab="products">Товари</button>
+    </nav>
+    <section id="deliveries" class="panel active">
+      <div class="panel-heading"><div><h2>Поставки</h2><p>Історія надходження матеріалів</p></div><a class="button secondary" href="/api/deliveries/export.csv">Експорт CSV</a></div>
+      <form id="delivery-form" class="form-grid">
+        <label>Постачальник<select id="delivery-supplier" required></select></label>
+        <label>Товар<select id="delivery-product" required></select></label>
+        <label>Кількість<input id="delivery-quantity" type="number" min="0.001" step="0.001" required></label>
+        <label>Дата поставки<input id="delivery-date" type="date" required></label>
+        <label>Ціна за одиницю<input id="delivery-price" type="number" min="0" step="0.01"></label>
+        <label>Примітки<input id="delivery-notes" maxlength="1000"></label>
+        <button class="button primary" type="submit">Зареєструвати поставку</button>
+      </form>
+      <div id="delivery-list" class="table-wrap"></div>
+    </section>
+    <section id="suppliers" class="panel">
+      <div class="panel-heading"><div><h2>Постачальники</h2><p>Довідник контрагентів</p></div></div>
+      <form id="supplier-form" class="form-grid">
+        <label>Назва організації<input id="supplier-name" maxlength="200" required></label>
+        <label>Контактна особа<input id="supplier-contact" maxlength="200"></label>
+        <label>Телефон<input id="supplier-phone" maxlength="50"></label>
+        <label>Електронна пошта<input id="supplier-email" type="email" maxlength="255"></label>
+        <button class="button primary" type="submit">Додати постачальника</button>
+      </form>
+      <div id="supplier-list" class="table-wrap"></div>
+    </section>
+    <section id="products" class="panel">
+      <div class="panel-heading"><div><h2>Товари</h2><p>Матеріали та їхні характеристики</p></div></div>
+      <form id="product-form" class="form-grid">
+        <label>Назва товару<input id="product-name" maxlength="200" required></label>
+        <label>Одиниця виміру<input id="product-unit" maxlength="40" placeholder="наприклад, м³"></label>
+        <label>Ціна за м³<input id="product-price" type="number" min="0" step="0.01"></label>
+        <label>Опис<input id="product-description"></label>
+        <button class="button primary" type="submit">Додати товар</button>
+      </form>
+      <div id="product-list" class="table-wrap"></div>
+    </section>
+    <p id="message" role="status" aria-live="polite"></p>
+  </main>
+  <footer>Навчальний проєкт · Голосовий помічник на основі хмарної інфраструктури</footer>
+  <script src="app.js"></script>
+</body>
+</html>
