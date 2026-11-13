@@ -129,3 +129,78 @@ async function start() {
   }
 }
 start();
+
+const voiceButton = $("voice-button");
+let recorder = null;
+let recordedChunks = [];
+let recordingStream = null;
+
+function setVoiceStatus(text) {
+  $("recording-status").textContent = text;
+}
+
+voiceButton.addEventListener("click", async () => {
+  if (recorder && recorder.state === "recording") {
+    recorder.stop();
+    voiceButton.disabled = true;
+    voiceButton.textContent = "Обробка…";
+    setVoiceStatus("Надсилаю аудіо на сервер…");
+    return;
+  }
+
+  if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
+    showMessage("Браузер не підтримує запис аудіо. Спробуйте оновити браузер.", true);
+    return;
+  }
+
+  try {
+    recordingStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const preferredType = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg"].find(
+      (type) => MediaRecorder.isTypeSupported(type)
+    );
+    recorder = new MediaRecorder(recordingStream, preferredType ? { mimeType: preferredType } : {});
+    recordedChunks = [];
+    recorder.addEventListener("dataavailable", (event) => {
+      if (event.data.size) recordedChunks.push(event.data);
+    });
+    recorder.addEventListener("stop", async () => {
+      recordingStream.getTracks().forEach((track) => track.stop());
+      const blob = new Blob(recordedChunks, { type: recorder.mimeType || "audio/webm" });
+      if (!blob.size) {
+        setVoiceStatus("Аудіо не записано. Спробуйте ще раз.");
+        voiceButton.disabled = false;
+        voiceButton.textContent = "🎙 Почати запис";
+        return;
+      }
+      const extension = blob.type.includes("ogg") ? "ogg" : "webm";
+      const form = new FormData();
+      form.append("file", blob, "voice." + extension);
+      try {
+        const response = await fetch(API + "/api/assistant/voice", { method: "POST", body: form });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || "Помилка голосового запиту");
+        $("voice-transcript").textContent = data.transcript;
+        $("voice-reply").textContent = data.reply;
+        $("voice-result").hidden = false;
+        if (data.audio_base64) {
+          $("voice-audio").src = "data:" + data.audio_media_type + ";base64," + data.audio_base64;
+        }
+        setVoiceStatus("Готово. Можете поставити наступне запитання.");
+        showMessage("Голосовий запит успішно оброблено.");
+      } catch (error) {
+        setVoiceStatus(error.message);
+        showMessage(error.message, true);
+      } finally {
+        voiceButton.disabled = false;
+        voiceButton.textContent = "🎙 Почати запис";
+      }
+    }, { once: true });
+    recorder.start();
+    voiceButton.textContent = "■ Зупинити запис";
+    setVoiceStatus("Слухаю… натисніть кнопку, щоб завершити запис.");
+  } catch (error) {
+    setVoiceStatus("Не вдалося отримати доступ до мікрофона.");
+    showMessage("Дозвольте браузеру використовувати мікрофон.", true);
+    voiceButton.disabled = false;
+  }
+});
