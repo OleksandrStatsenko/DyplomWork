@@ -16,6 +16,22 @@
       <div><h2>Панель керування</h2><p>Додавайте постачальників, товари та реєструйте поставки в єдиній базі даних.</p></div>
       <a class="button secondary" href="/docs" target="_blank" rel="noreferrer">Документація API</a>
     </section>
+    <section class="voice-card" aria-labelledby="voice-title">
+      <div class="voice-copy">
+        <p class="eyebrow">ГОЛОСОВЕ КЕРУВАННЯ</p>
+        <h2 id="voice-title">Спілкуйтеся з помічником</h2>
+        <p>Натисніть кнопку, промовте запит українською та отримайте голосову відповідь.</p>
+      </div>
+      <div class="voice-controls">
+        <button id="voice-button" class="button primary" type="button">🎙 Почати запис</button>
+        <span id="recording-status" aria-live="polite">Запис не активний</span>
+      </div>
+      <div id="voice-result" class="voice-result" hidden>
+        <p><strong>Розпізнаний текст:</strong> <span id="voice-transcript"></span></p>
+        <p><strong>Відповідь помічника:</strong> <span id="voice-reply"></span></p>
+        <audio id="voice-audio" controls></audio>
+      </div>
+    </section>
     <nav class="tabs" aria-label="Розділи">
       <button class="tab active" data-tab="deliveries">Поставки</button>
       <button class="tab" data-tab="suppliers">Постачальники</button>
