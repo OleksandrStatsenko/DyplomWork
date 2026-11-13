@@ -1,4 +1,6 @@
+import csv
 from datetime import date
+from io import StringIO
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy import select
@@ -43,6 +45,18 @@ def get_supplier(supplier_id: int, db: Session = Depends(get_db)):
     return supplier
 
 
+@router.put("/suppliers/{supplier_id}", response_model=SupplierRead, tags=["suppliers"])
+def update_supplier(supplier_id: int, payload: SupplierCreate, db: Session = Depends(get_db)):
+    supplier = db.get(Supplier, supplier_id)
+    if supplier is None:
+        raise HTTPException(status_code=404, detail="Постачальника не знайдено")
+    for field, value in payload.model_dump().items():
+        setattr(supplier, field, value)
+    db.commit()
+    db.refresh(supplier)
+    return supplier
+
+
 @router.delete("/suppliers/{supplier_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["suppliers"])
 def delete_supplier(supplier_id: int, db: Session = Depends(get_db)):
     supplier = db.get(Supplier, supplier_id)
@@ -70,6 +84,18 @@ def list_products(search: str | None = Query(default=None, max_length=200), db: 
     if search:
         stmt = stmt.where(Product.name.ilike(f"%{search}%"))
     return db.scalars(stmt).all()
+
+
+@router.put("/products/{product_id}", response_model=ProductRead, tags=["products"])
+def update_product(product_id: int, payload: ProductCreate, db: Session = Depends(get_db)):
+    product = db.get(Product, product_id)
+    if product is None:
+        raise HTTPException(status_code=404, detail="Товар не знайдено")
+    for field, value in payload.model_dump().items():
+        setattr(product, field, value)
+    db.commit()
+    db.refresh(product)
+    return product
 
 
 @router.delete("/products/{product_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["products"])
@@ -105,6 +131,8 @@ def list_deliveries(
     supplier_id: int | None = Query(default=None, gt=0),
     db: Session = Depends(get_db),
 ):
+    if date_from and date_to and date_from > date_to:
+        raise HTTPException(status_code=422, detail="Початкова дата не може бути пізнішою за кінцеву")
     stmt = select(Delivery).order_by(Delivery.delivery_date.desc(), Delivery.id.desc())
     if date_from:
         stmt = stmt.where(Delivery.delivery_date >= date_from)
@@ -117,6 +145,22 @@ def list_deliveries(
     return db.scalars(stmt).all()
 
 
+@router.put("/deliveries/{delivery_id}", response_model=DeliveryRead, tags=["deliveries"])
+def update_delivery(delivery_id: int, payload: DeliveryCreate, db: Session = Depends(get_db)):
+    delivery = db.get(Delivery, delivery_id)
+    if delivery is None:
+        raise HTTPException(status_code=404, detail="Поставку не знайдено")
+    if db.get(Supplier, payload.supplier_id) is None:
+        raise HTTPException(status_code=404, detail="Постачальника не знайдено")
+    if db.get(Product, payload.product_id) is None:
+        raise HTTPException(status_code=404, detail="Товар не знайдено")
+    for field, value in payload.model_dump().items():
+        setattr(delivery, field, value)
+    db.commit()
+    db.refresh(delivery)
+    return delivery
+
+
 @router.delete("/deliveries/{delivery_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["deliveries"])
 def delete_delivery(delivery_id: int, db: Session = Depends(get_db)):
     delivery = db.get(Delivery, delivery_id)
@@ -125,3 +169,28 @@ def delete_delivery(delivery_id: int, db: Session = Depends(get_db)):
     db.delete(delivery)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get("/deliveries/export.csv", tags=["deliveries"])
+def export_deliveries_csv(db: Session = Depends(get_db)):
+    deliveries = db.scalars(
+        select(Delivery).order_by(Delivery.delivery_date.desc(), Delivery.id.desc())
+    ).all()
+    output = StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["ID", "ID постачальника", "ID товару", "Кількість", "Дата поставки", "Ціна за одиницю", "Примітки"])
+    for item in deliveries:
+        writer.writerow([
+            item.id,
+            item.supplier_id,
+            item.product_id,
+            item.quantity,
+            item.delivery_date.isoformat(),
+            item.unit_price if item.unit_price is not None else "",
+            item.notes or "",
+        ])
+    return Response(
+        content="\ufeff" + output.getvalue(),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="deliveries.csv"'},
+    )
