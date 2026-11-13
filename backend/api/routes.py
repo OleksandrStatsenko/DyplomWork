@@ -173,17 +173,20 @@ def delete_delivery(delivery_id: int, db: Session = Depends(get_db)):
 
 @router.get("/deliveries/export.csv", tags=["deliveries"])
 def export_deliveries_csv(db: Session = Depends(get_db)):
-    deliveries = db.scalars(
-        select(Delivery).order_by(Delivery.delivery_date.desc(), Delivery.id.desc())
+    rows = db.execute(
+        select(Delivery, Supplier.name, Product.name)
+        .join(Supplier, Delivery.supplier_id == Supplier.id)
+        .join(Product, Delivery.product_id == Product.id)
+        .order_by(Delivery.delivery_date.desc(), Delivery.id.desc())
     ).all()
     output = StringIO()
     writer = csv.writer(output)
-    writer.writerow(["ID", "ID постачальника", "ID товару", "Кількість", "Дата поставки", "Ціна за одиницю", "Примітки"])
-    for item in deliveries:
+    writer.writerow(["ID", "Постачальник", "Товар", "Кількість", "Дата поставки", "Ціна за одиницю", "Примітки"])
+    for item, supplier_name, product_name in rows:
         writer.writerow([
             item.id,
-            item.supplier_id,
-            item.product_id,
+            supplier_name,
+            product_name,
             item.quantity,
             item.delivery_date.isoformat(),
             item.unit_price if item.unit_price is not None else "",
