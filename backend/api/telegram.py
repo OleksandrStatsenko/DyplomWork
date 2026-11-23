@@ -13,6 +13,7 @@ from backend.database.models import ConversationHistory, User
 from backend.database.session import get_db
 from backend.services.ai_service import generate_reply
 from backend.services.speech_service import synthesize_speech, transcribe_audio
+from backend.services.telegram_commands import handle_accounting_command
 
 router = APIRouter(prefix="/api/telegram", tags=["telegram"])
 logger = logging.getLogger(__name__)
@@ -118,19 +119,22 @@ async def telegram_webhook(
         command, _, argument = text.partition(" ")
         normalized_command = command.split("@", 1)[0].lower()
         if normalized_command == "/start":
-            reply = (
-                "Вітаю! Я голосовий помічник для обліку постачальників, товарів і поставок. "
-                "Надішліть текстове або голосове повідомлення."
-            )
+            reply = handle_accounting_command("/start", db)
         elif normalized_command == "/ask":
             if not argument.strip():
                 reply = "Напишіть запитання після команди /ask."
             else:
                 reply = await generate_reply(argument.strip())
-        elif text.startswith("/"):
-            reply = "Не знаю такої команди. Надішліть звичайне або голосове повідомлення."
         else:
-            reply = await generate_reply(text)
+            try:
+                reply = handle_accounting_command(text, db)
+            except ValueError as exc:
+                reply = f"Не вдалося виконати команду: {exc}"
+            if reply is None:
+                if text.startswith("/"):
+                    reply = "Не знаю такої команди. Надішліть /help, щоб побачити доступні команди."
+                else:
+                    reply = await generate_reply(text)
 
         if isinstance(voice, dict):
             await send_voice(chat_id, reply)
