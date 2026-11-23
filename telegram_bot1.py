@@ -18,7 +18,7 @@ DB_CONN_STR = (
     "DATABASE=voice_assistant;"
     "Trusted_Connection=yes;"
 )
-OPENROUTER_API_KEY = "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"
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 OPENROUTER_MODEL = "mistralai/mistral-7b-instruct"
 
 # --- Стан розмов ---
@@ -334,7 +334,7 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # --- Основний запуск ---
 if __name__ == '__main__':
-    app = ApplicationBuilder().token("7678185832:AAH9RQ0Al4IA4uc0K_RjZGhgX6gal9CzwfQ").build()
+    app = ApplicationBuilder().token(os.environ["TELEGRAM_BOT_TOKEN"]).build()
 
     # Команди
     app.add_handler(CommandHandler("start", start))
