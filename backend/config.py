@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/voice_assistant"
     web_origin: str = "http://localhost:5173"
     telegram_bot_token: str | None = None
+    telegram_webhook_secret: str | None = None
     openrouter_api_key: str | None = None
     openrouter_model: str = "mistralai/mistral-7b-instruct"
     groq_api_key: str | None = None
