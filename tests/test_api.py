@@ -96,3 +96,19 @@ def test_delivery_rejects_unknown_references(client: TestClient) -> None:
         },
     )
     assert response.status_code == 404
+
+
+def test_telegram_webhook_requires_secret(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    from backend.config import settings
+
+    monkeypatch.setattr(settings, "telegram_webhook_secret", "test-secret")
+    response = client.post("/api/telegram/webhook", json={"update_id": 1})
+    assert response.status_code == 403
+
+    response = client.post(
+        "/api/telegram/webhook",
+        headers={"X-Telegram-Bot-Api-Secret-Token": "test-secret"},
+        json={"update_id": 1},
+    )
+    assert response.status_code == 200
+    assert response.json() == {"ok": True}
