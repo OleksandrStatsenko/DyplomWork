@@ -13,7 +13,7 @@ import requests  # ⬅️ для Mistral
 from gtts import gTTS
 
 # 🔐 Ключ OpenRouter
-OPENROUTER_API_KEY = "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"  # ← ВСТАВ СВІЙ КЛЮЧ
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")  # ← ВСТАВ СВІЙ КЛЮЧ
 
 # 🔹 Налаштування логів
 logging.basicConfig(filename="assistant_log.txt", level=logging.INFO, format="%(asctime)s - %(message)s")
