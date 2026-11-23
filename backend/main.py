@@ -4,12 +4,13 @@ from fastapi.staticfiles import StaticFiles
 
 from backend.api.routes import router
 from backend.api.assistant import router as assistant_router
+from backend.api.telegram import router as telegram_router
 from backend.config import settings
 
 app = FastAPI(
     title=settings.app_name,
     description="Серверна частина голосового помічника для вебсайту та Telegram.",
-    version="0.3.0",
+    version="0.4.0",
 )
 
 app.add_middleware(
@@ -22,6 +23,7 @@ app.add_middleware(
 
 app.include_router(router)
 app.include_router(assistant_router)
+app.include_router(telegram_router)
 
 
 @app.get("/health", tags=["система"])
